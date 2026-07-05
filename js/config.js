@@ -37,9 +37,26 @@ export const CONFIG = {
     caminar: 3.8,
     correr: 9.8,
     bicicleta: 7.5,
+    // MET de reposo (de pie/quieto), usado en los tramos donde el
+    // acelerómetro confirma que no hay movimiento físico real, en vez de
+    // seguir aplicando el MET de la actividad como si el usuario siguiera activo.
+    reposo: 1.3,
   },
 
   pesoDefaultKg: 70,
+
+  // --- Sensor de movimiento (acelerómetro, DeviceMotion API) ---
+  // Señal independiente del GPS para confirmar movimiento físico real.
+  // Ver infrastructure/motion/MotionSensorService.js para el porqué.
+  motion: {
+    // Ventana de tiempo (ms) sobre la que se mide la varianza de la
+    // aceleración para decidir si hay movimiento.
+    ventanaMs: 3000,
+    // Varianza mínima (m²/s⁴) para considerar que hay vibración/oscilación
+    // real (pasos, pedaleo). Es un valor de partida razonable; puede
+    // requerir ajuste fino según el dispositivo real de prueba.
+    umbralVarianza: 0.35,
+  },
 
   // --- Mapa (Leaflet + OpenStreetMap, no requiere API key) ---
   map: {

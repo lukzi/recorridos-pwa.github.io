@@ -195,6 +195,32 @@ body {
   color: white;
 }
 
+.badge-sensor {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+  z-index: 999;
+  box-shadow: var(--sombra);
+}
+.badge-sensor--activo {
+  background: #dcfce7;
+  color: #15803d;
+}
+.badge-sensor--quieto {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-sensor--na {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
 .panel-inferior {
   background: white;
   border-radius: 20px 20px 0 0;

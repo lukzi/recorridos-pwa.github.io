@@ -9,6 +9,7 @@ export function renderRecorrido(container, router) {
   const mapaDiv = el('div', { class: 'mapa', id: 'mapa-recorrido' });
 
   const banner = el('div', { class: 'banner banner--oculto' });
+  const badgeSensor = el('div', { class: 'badge-sensor', id: 'badge-sensor', text: 'Sensor: calibrando...' });
 
   const statPrincipal = (id, label, valor, unidad = '') =>
     el('div', { class: 'stat' }, [
@@ -40,6 +41,7 @@ export function renderRecorrido(container, router) {
   const vista = el('div', { class: 'screen screen--recorrido' }, [
     mapaDiv,
     banner,
+    badgeSensor,
     el('div', { class: 'panel-inferior' }, [panelPrincipal, panelSecundario, controles]),
   ]);
 
@@ -68,6 +70,23 @@ export function renderRecorrido(container, router) {
     container.querySelector('#stat-vel-prom').textContent = `Vel. prom.: ${RitmoCalculator.formatearVelocidad(stats.velocidadPromedioKmh)} km/h`;
     container.querySelector('#stat-hora-inicio').textContent = `Inicio: ${formatHora(stats.horaInicio)}`;
     container.querySelector('#stat-puntos').textContent = `Puntos GPS: ${stats.cantidadPuntos}`;
+
+    const badge = container.querySelector('#badge-sensor');
+    if (badge) {
+      if (!stats.sensorMovimientoDisponible) {
+        badge.textContent = 'Sensor de movimiento: no disponible (solo GPS)';
+        badge.className = 'badge-sensor badge-sensor--na';
+      } else if (stats.enMovimiento === true) {
+        badge.textContent = '● Movimiento detectado';
+        badge.className = 'badge-sensor badge-sensor--activo';
+      } else if (stats.enMovimiento === false) {
+        badge.textContent = '● Quieto';
+        badge.className = 'badge-sensor badge-sensor--quieto';
+      } else {
+        badge.textContent = 'Sensor: calibrando...';
+        badge.className = 'badge-sensor';
+      }
+    }
   }
 
   controller.on('onEstadisticas', actualizarUI);
@@ -89,6 +108,11 @@ export function renderRecorrido(container, router) {
 
   async function arrancar() {
     try {
+      // Se pide primero (misma interacción del botón "Empezar recorrido",
+      // requisito de iOS 13+ para el acelerómetro). Si se deniega o no está
+      // soportado, la app sigue funcionando solo con las reglas de GPS.
+      await controller.solicitarPermisoMovimiento();
+
       mostrarBanner('Solicitando ubicación...', 'info');
       const primera = await controller.solicitarPermisoUbicacion();
       ocultarBanner();

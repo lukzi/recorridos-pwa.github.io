@@ -4,7 +4,7 @@
 // se cachean de forma oportunista para permitir revisar el mapa offline
 // en zonas ya visitadas.
 
-const CACHE_VERSION = 'recorridos-v1';
+const CACHE_VERSION = 'recorridos-v2';
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const TILES_CACHE = `tiles-${CACHE_VERSION}`;
 
@@ -21,13 +21,16 @@ const SHELL_ASSETS = [
   './js/domain/usecases/RitmoCalculator.js',
   './js/domain/usecases/CaloriasCalculator.js',
   './js/domain/usecases/GpsFilter.js',
+  './js/domain/usecases/SuavizadorPosicion.js',
   './js/data/datasources/IndexedDBDataSource.js',
   './js/data/repositories/RecorridoRepository.js',
   './js/infrastructure/gps/GeolocationService.js',
   './js/infrastructure/map/MapService.js',
   './js/infrastructure/timer/CronometroService.js',
+  './js/infrastructure/motion/MotionSensorService.js',
   './js/application/TrackingController.js',
   './js/presentation/router/Router.js',
+  './js/presentation/state/AppState.js',
   './js/presentation/utils/dom.js',
   './js/presentation/screens/InicioScreen.js',
   './js/presentation/screens/RecorridoScreen.js',
