@@ -9,8 +9,21 @@ export const CONFIG = {
     timeout: 15000,
     // Precisión mínima aceptable (metros). Puntos con peor precisión se descartan.
     maxAccuracyMeters: 25,
-    // Distancia mínima entre puntos consecutivos para considerarlos un movimiento real (metros).
-    minDistanceMeters: 2,
+    // Piso mínimo de distancia entre puntos consecutivos para considerarlos
+    // movimiento real (metros). El GPS de un teléfono en reposo suele
+    // "saltar" 5-20 m entre lecturas por ruido, así que 2 m era insuficiente
+    // y esos saltos aleatorios se contaban como recorrido (efecto "caminando
+    // en círculos" estando quieto). El umbral efectivo usado por GpsFilter
+    // es el mayor entre este piso y la precisión reportada por el propio GPS
+    // (ver factorPrecision), para adaptarse a la calidad real de la señal.
+    minDistanceMeters: 6,
+    // Multiplicador sobre la precisión (accuracy) promedio de dos lecturas
+    // consecutivas: la distancia entre ellas debe superar este umbral para
+    // no confundirse con el margen de error propio del GPS.
+    factorPrecision: 0.9,
+    // Velocidad (m/s) reportada por el propio GPS por debajo de la cual se
+    // considera al usuario quieto, incluso si la posición cruda varió.
+    velocidadMinConfiableMps: 0.3,
     // Velocidad máxima plausible según actividad (m/s), para descartar saltos de GPS.
     maxSpeedMps: {
       caminar: 4,      // ~14.4 km/h
