@@ -72,8 +72,14 @@ export function renderRecorrido(container, router) {
 
   controller.on('onEstadisticas', actualizarUI);
   controller.on('onPunto', (coordenada) => {
+    // Punto CONFIRMADO como movimiento real: se dibuja en la polilínea y suma distancia.
     ocultarBanner();
     mapService.agregarPunto(coordenada.lat, coordenada.lng);
+  });
+  controller.on('onPosicionCruda', (coordenada) => {
+    // Feedback inmediato de cada fix crudo (aunque aún no esté confirmado),
+    // para que el marcador no se sienta "congelado" mientras se confirma el movimiento.
+    mapService.moverMarcadorSinRuta(coordenada.lat, coordenada.lng);
   });
   controller.on('onError', ({ error, esRecuperable }) => {
     mostrarBanner(error.message, esRecuperable ? 'advertencia' : 'error');

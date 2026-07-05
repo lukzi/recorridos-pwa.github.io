@@ -16,11 +16,11 @@ export const CONFIG = {
     // en círculos" estando quieto). El umbral efectivo usado por GpsFilter
     // es el mayor entre este piso y la precisión reportada por el propio GPS
     // (ver factorPrecision), para adaptarse a la calidad real de la señal.
-    minDistanceMeters: 6,
+    minDistanceMeters: 8,
     // Multiplicador sobre la precisión (accuracy) promedio de dos lecturas
     // consecutivas: la distancia entre ellas debe superar este umbral para
     // no confundirse con el margen de error propio del GPS.
-    factorPrecision: 0.9,
+    factorPrecision: 1.1,
     // Velocidad (m/s) reportada por el propio GPS por debajo de la cual se
     // considera al usuario quieto, incluso si la posición cruda varió.
     velocidadMinConfiableMps: 0.3,

@@ -38,13 +38,27 @@ export class MapService {
     setTimeout(() => this._map.invalidateSize(), 100);
   }
 
-  /** Agrega un punto al recorrido y actualiza la polilínea + marcador. */
+  /** Agrega un punto CONFIRMADO al recorrido: extiende la polilínea y mueve el marcador. */
   agregarPunto(lat, lng, { centrar = true } = {}) {
     if (!this._map) return;
     const punto = [lat, lng];
     this._puntos.push(punto);
     this._polyline.setLatLngs(this._puntos);
+    this._moverMarcador(punto, centrar);
+  }
 
+  /**
+   * Mueve el marcador de posición actual sin tocar la polilínea ni la
+   * distancia. Se usa para dar feedback visual inmediato de cada fix crudo
+   * del GPS, aunque el punto todavía no esté confirmado como parte del
+   * recorrido (ver TrackingController._procesarPunto).
+   */
+  moverMarcadorSinRuta(lat, lng, { centrar = true } = {}) {
+    if (!this._map) return;
+    this._moverMarcador([lat, lng], centrar);
+  }
+
+  _moverMarcador(punto, centrar) {
     if (!this._marcadorActual) {
       this._marcadorActual = L.circleMarker(punto, {
         radius: 8,

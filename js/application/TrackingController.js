@@ -4,6 +4,7 @@ import { GpsFilter } from '../domain/usecases/GpsFilter.js';
 import { HaversineCalculator } from '../domain/usecases/HaversineCalculator.js';
 import { RitmoCalculator } from '../domain/usecases/RitmoCalculator.js';
 import { CaloriasCalculator } from '../domain/usecases/CaloriasCalculator.js';
+import { SuavizadorPosicion } from '../domain/usecases/SuavizadorPosicion.js';
 import { Recorrido, EstadoRecorrido } from '../domain/entities/Recorrido.js';
 
 /**
@@ -23,9 +24,11 @@ export class TrackingController {
     this._pesoKg = 70;
     this._horaInicio = null;
     this._puntosDescartados = 0;
+    this._suavizador = new SuavizadorPosicion(5);
 
     this._listeners = {
       onPunto: [],
+      onPosicionCruda: [],
       onError: [],
       onTick: [],
       onEstadisticas: [],
@@ -50,6 +53,7 @@ export class TrackingController {
     this._coordenadas = [];
     this._distanciaMetros = 0;
     this._puntosDescartados = 0;
+    this._suavizador.reiniciar();
     this._horaInicio = Date.now();
 
     this._cronometro.iniciar((ms) => {
@@ -102,24 +106,55 @@ export class TrackingController {
     return recorrido;
   }
 
-  _procesarPunto(coordenada) {
-    const anterior = this._coordenadas[this._coordenadas.length - 1] || null;
-    const evaluacion = GpsFilter.evaluar(anterior, coordenada, this._tipoActividad);
+  /**
+   * Procesa cada fix crudo del GPS en dos etapas:
+   *
+   *   1. Suavizado: el punto crudo pasa por un promedio móvil de las
+   *      últimas 5 lecturas (`SuavizadorPosicion`). Esto reduce el ruido
+   *      del receptor GPS antes de tomar cualquier decisión — un único
+   *      salto de varios metros estando quieto influye poco en un promedio
+   *      de 5 muestras, mientras que un movimiento real sostenido sí se
+   *      refleja (con un pequeño retraso de arranque de ~5 lecturas).
+   *   2. Filtrado de dominio: el punto ya suavizado se compara contra el
+   *      último punto aceptado usando `GpsFilter` (precisión, velocidad
+   *      plausible, umbral de ruido dinámico según la precisión del GPS).
+   *
+   * Sin el suavizado, comparar fixes crudos consecutivos permite que el
+   * ruido aleatorio del GPS se acumule como si fuera desplazamiento real
+   * (el efecto de "caminar en círculos" estando parado).
+   */
+  _procesarPunto(coordenadaCruda) {
+    // Feedback inmediato de posición cruda (para el marcador en el mapa),
+    // independiente de si el punto termina formando parte del recorrido.
+    this._emit('onPosicionCruda', coordenadaCruda);
 
-    if (!evaluacion.aceptado) {
-      this._puntosDescartados++;
-      // Puntos descartados no se dibujan ni suman distancia, pero se
-      // informan igualmente para depuración/UX (p.ej. "buscando señal").
+    const suavizada = this._suavizador.procesar(coordenadaCruda);
+    if (!suavizada) {
+      // Aún acumulando las primeras lecturas para poder promediar.
       this._emit('onEstadisticas', this._calcularEstadisticas());
       return;
     }
 
-    if (anterior) {
-      this._distanciaMetros += evaluacion.distanciaMetros;
-    }
-    this._coordenadas.push(coordenada);
+    const ancla = this._coordenadas[this._coordenadas.length - 1] || null;
 
-    this._emit('onPunto', coordenada);
+    if (!ancla) {
+      this._coordenadas.push(suavizada);
+      this._emit('onPunto', suavizada);
+      this._emit('onEstadisticas', this._calcularEstadisticas());
+      return;
+    }
+
+    const evaluacion = GpsFilter.evaluar(ancla, suavizada, this._tipoActividad);
+
+    if (!evaluacion.aceptado) {
+      this._puntosDescartados++;
+      this._emit('onEstadisticas', this._calcularEstadisticas());
+      return;
+    }
+
+    this._distanciaMetros += evaluacion.distanciaMetros;
+    this._coordenadas.push(suavizada);
+    this._emit('onPunto', suavizada);
     this._emit('onEstadisticas', this._calcularEstadisticas());
   }
 
